@@ -40,6 +40,7 @@ function ensureClassStructure(cls) {
   if (!cls.tasks) cls.tasks = [];
   if (!cls.feedbacks) cls.feedbacks = {};
   if (!cls.students) cls.students = [];
+  if (!cls.className) cls.className = cls.classId;
 }
 
 function saveState(showMessage = false) {
@@ -113,6 +114,8 @@ function renderRubricLists(aspectKey, levelLabel, saved = { achieved: [], needsW
   if (!levelLabel) {
     achievedBox.innerHTML = `<div class="placeholder">請先選擇等級以顯示句庫。</div>`;
     needsBox.innerHTML = `<div class="placeholder">請先選擇等級以顯示句庫。</div>`;
+    document.querySelector(`[data-achieved-count="${aspectKey}"]`).textContent = "0 則已選";
+    document.querySelector(`[data-needs-count="${aspectKey}"]`).textContent = "0 則已選";
     return;
   }
 
@@ -304,7 +307,7 @@ function renderClassList() {
     card.innerHTML = `
       <div class="flex-between class-card-header">
         <div>
-          <div class="class-title">${cls.classId}${cls.className ? "｜" + cls.className : ""}</div>
+          <div class="class-title">${cls.className || cls.classId}</div>
           <div class="small-note">學生 ${cls.students.length} 人，任務 ${cls.tasks.length} 則</div>
         </div>
         <div class="flex-between" style="gap:0.35rem;">
@@ -329,13 +332,13 @@ function renderClassList() {
                 </div>
                 <div class="task-actions">
                   <button data-start="${task.id}" data-class="${cls.classId}">${startLabel}</button>
+                  <button class="secondary" data-export-task="${task.id}" data-class="${cls.classId}">匯出連結</button>
                   <button class="danger" data-delete-task="${task.id}" data-class="${cls.classId}">刪除</button>
                 </div>
               </div>`;
           })
           .join("")}
-        <div class="small-note light-label">＋ 新增批改任務</div>
-        <button class="ghost" data-add-task="${cls.classId}">新增任務</button>
+        <button class="ghost" data-add-task="${cls.classId}"><span class="small-note light-label">＋ 新增批改任務</span></button>
       </div>
     `;
     list.appendChild(card);
@@ -346,7 +349,7 @@ function updateGradingHeader() {
   const cls = getCurrentClass();
   const task = getCurrentTask();
   document.getElementById("currentClassLabel").textContent = cls
-    ? `${cls.classId}${cls.className ? "｜" + cls.className : ""}`
+    ? `${cls.className || cls.classId}`
     : "尚未選擇";
   document.getElementById("currentTaskLabel").textContent = task
     ? `${task.topic || task.id}${task.date ? "｜" + task.date : ""}`
@@ -373,11 +376,10 @@ function closeModal(id) {
 }
 
 function createClass() {
-  const classId = document.getElementById("modalClassId").value.trim();
   const className = document.getElementById("modalClassName").value.trim();
   const size = Number(document.getElementById("modalClassSize").value) || 0;
-  if (!classId) return alert("請輸入班級代碼。");
-  if (classes.some((c) => c.classId === classId)) return alert("班級代碼已存在。");
+  if (!className) return alert("請輸入班級名稱。");
+  if (classes.some((c) => c.classId === className)) return alert("班級名稱已存在。");
   if (size <= 0) return alert("請輸入正確的人數。");
   const digits = Math.max(2, size.toString().length);
   const students = Array.from({ length: size }, (_, idx) => ({
@@ -385,9 +387,9 @@ function createClass() {
     name: "",
     secretCode: generateSecretCode(),
   }));
-  const cls = { classId, className, students, tasks: [], feedbacks: {} };
+  const cls = { classId: className, className, students, tasks: [], feedbacks: {} };
   classes.push(cls);
-  selectedClassId = classId;
+  selectedClassId = className;
   selectedTaskId = null;
   saveState(true);
   closeModal("createClassModal");
@@ -397,7 +399,6 @@ function createClass() {
 function populateEditClassModal() {
   const cls = getCurrentClass();
   if (!cls) return;
-  document.getElementById("editClassId").value = cls.classId;
   document.getElementById("editClassName").value = cls.className || "";
   renderStudentTable();
   renderSecretViewer();
@@ -406,17 +407,19 @@ function populateEditClassModal() {
 function saveClassBasics() {
   const cls = getCurrentClass();
   if (!cls) return;
-  const newId = document.getElementById("editClassId").value.trim();
   const newName = document.getElementById("editClassName").value.trim();
-  if (!newId) return setStatus("班級代碼不可為空。");
-  if (newId !== cls.classId && classes.some((c) => c.classId === newId)) {
-    setStatus("班級代碼重複，請重新輸入。");
-    document.getElementById("editClassId").value = cls.classId;
+  if (!newName) {
+    document.getElementById("editClassName").value = cls.className;
+    return setStatus("班級名稱不可為空。");
+  }
+  if (newName !== cls.classId && classes.some((c) => c.classId === newName)) {
+    setStatus("班級名稱重複，請重新輸入。");
+    document.getElementById("editClassName").value = cls.className;
     return;
   }
-  cls.classId = newId;
+  cls.classId = newName;
   cls.className = newName;
-  selectedClassId = newId;
+  selectedClassId = newName;
   saveState(true);
   renderClassList();
   updateGradingHeader();
@@ -425,7 +428,7 @@ function saveClassBasics() {
 function deleteClass() {
   const cls = getCurrentClass();
   if (!cls) return;
-  if (!confirm(`確定刪除 ${cls.classId}？所有任務與進度都會移除。`)) return;
+  if (!confirm(`確定刪除 ${cls.className || cls.classId}？所有任務與進度都會移除。`)) return;
   classes = classes.filter((c) => c.classId !== cls.classId);
   if (!classes.length) {
     selectedClassId = null;
@@ -520,7 +523,7 @@ function exportJson() {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = `${cls.classId || "class"}.json`;
+  a.download = `${cls.className || cls.classId || "class"}.json`;
   a.click();
   URL.revokeObjectURL(url);
 }
@@ -591,7 +594,13 @@ async function exportLinks(taskId) {
   if (!cls) return;
   const task = cls.tasks.find((t) => t.id === taskId);
   if (!task) return;
-  const links = [];
+  const prog = computeTaskProgress(cls, taskId);
+  if (prog.percent < 100) {
+    const goOn = confirm("仍有未完成學生，確定要匯出嗎？");
+    if (!goOn) return;
+  }
+
+  const rows = [];
   for (const stu of cls.students) {
     const fb = cls.feedbacks?.[taskId]?.[stu.id];
     if (!fb || !aspectList.every((a) => fb[a.key]?.level)) continue;
@@ -610,16 +619,25 @@ async function exportLinks(taskId) {
     const encoded = btoa(encodeURIComponent(jsonString));
     const hash = await computeHash(cls.classId, stu.id, stu.secretCode);
     const url = `${location.origin}${location.pathname.replace(/[^/]+$/, "feedback.html")}?p=${encoded}&h=${hash}`;
-    links.push({ studentId: stu.id, name: stu.name, url });
+    rows.push(`<tr><td>${stu.id}</td><td>${stu.name || ""}</td><td><a href="${url}" target="_blank">回饋報告</a></td></tr>`);
   }
-  if (!links.length) return alert("尚無完成的學生可匯出。");
-  const blob = new Blob([JSON.stringify(links, null, 2)], { type: "application/json" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `${task.topic || task.id}-links.json`;
-  a.click();
-  URL.revokeObjectURL(url);
+  if (!rows.length) return alert("尚無完成的學生可匯出。");
+  const win = window.open("", "_blank");
+  if (!win) return alert("請允許彈出視窗以匯出 PDF。");
+  const title = `${cls.className || cls.classId}｜${task.topic || "批改任務"} 回饋連結`;
+  win.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>${title}</title>
+  <style>
+    body{font-family:Arial,'Noto Sans TC',sans-serif;padding:16px;}
+    h1{font-size:18px;margin-bottom:12px;}
+    table{width:100%;border-collapse:collapse;}
+    th,td{border:1px solid #cbd5e1;padding:8px;text-align:left;font-size:14px;}
+    th{background:#f1f5f9;}
+  </style></head><body>
+  <h1>${title}</h1>
+  <table><thead><tr><th>座號</th><th>姓名</th><th>連結</th></tr></thead><tbody>${rows.join("")}</tbody></table>
+  <script>window.onload=()=>{setTimeout(()=>{window.print();},150);};</script>
+  </body></html>`);
+  win.document.close();
 }
 
 function deleteTask(taskId) {
@@ -743,6 +761,12 @@ function bindEvents() {
       jumpToFirstInProgress();
       return;
     }
+    if (e.target.matches("button[data-export-task]")) {
+      selectedClassId = e.target.dataset.class;
+      selectedTaskId = e.target.dataset.exportTask;
+      exportLinks(e.target.dataset.exportTask);
+      return;
+    }
     if (e.target.matches("button[data-delete-task]")) {
       selectedClassId = e.target.dataset.class;
       deleteTask(e.target.dataset.deleteTask);
@@ -804,10 +828,15 @@ function bindEvents() {
     if (btn) {
       const aspect = btn.dataset.aspect;
       const levelLabel = btn.dataset.label;
-      setLevelUI(aspect, levelLabel);
+      const isActive = btn.classList.contains("active");
+      setLevelUI(aspect, isActive ? "" : levelLabel);
       const cls = getCurrentClass();
       const saved = cls?.feedbacks?.[selectedTaskId]?.[document.getElementById("studentSelect").value]?.[aspect];
-      renderRubricLists(aspect, levelLabel, saved || { achieved: [], needsWork: [] });
+      if (isActive) {
+        renderRubricLists(aspect, "", { achieved: [], needsWork: [] });
+      } else {
+        renderRubricLists(aspect, levelLabel, saved || { achieved: [], needsWork: [] });
+      }
       saveCurrentFeedback();
     }
   });
@@ -834,7 +863,6 @@ function bindEvents() {
 
   document.getElementById("exportBtn").addEventListener("click", exportJson);
 
-  document.getElementById("editClassId").addEventListener("blur", saveClassBasics);
   document.getElementById("editClassName").addEventListener("blur", saveClassBasics);
 
   document.getElementById("studentTable").addEventListener("input", (e) => {

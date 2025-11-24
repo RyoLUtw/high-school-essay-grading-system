@@ -333,6 +333,12 @@ input.inline-input {
   cursor: pointer;
 }
 
+.close-top {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+}
+
 .modal.floating {
   align-items: flex-end;
   justify-content: flex-end;
@@ -390,6 +396,7 @@ input.inline-input {
   max-height: 90vh;
   overflow-y: auto;
   width: min(900px, 95vw);
+  position: relative;
 }
 
 .task-row {
@@ -503,11 +510,15 @@ input.inline-input {
 }
 
 .ghost {
-  border: 1px dashed var(--border);
+  border: 1px dashed #475569;
   background: transparent;
   padding: 0.65rem;
   border-radius: 10px;
   cursor: pointer;
+}
+
+.ghost .light-label {
+  color: #475569;
 }
 
 .modal-content.large {
