@@ -1,0 +1,58 @@
+I have an idea for a app to grade short essays.
+
+The grading process is as follows:
+
+content >> organization >> grammar >> lexical performance
+
+for each evaluated aspect, the teacher first choose a level of performance based on the rubric. Then based on the rubric, the teacher then provide what is achieved and what is not in more detail to justify the evaluation and help students find their weakness and items to improve. These achieved/unachieved items are pre-made so teachers can select for grading efficiency but also can be manually entered for a less common case. After each evaluation is done, a complete feedback sheet is generated, listing the achievements and improvements needed. Each list is further categorized into the 4 evaluation aspects.
+
+I want a student management system built in so teachers can easily manage their grading process and results. Classes should be created and in-class student ID will be automatically generated based on class size(e.g. 40 students then generate number 1 to number 40).
+
+I need suggestion on how to share the results with students, any practical suggestion for digitally and printing hard copies?
+
+
+======
+change the following:
+
+-remove the front page for role selection, if no url parameter is detected, then go to teacher's mode. Otherwise go to student mode. Still display the error message if the url parameter can't be processed.
+
+
+teacher's page:
+
+-make essay grading and class management two different tabs. 
+Under class management, add a "create grading task". Grading tasks can be managed with a modal(to edit/delete/export links). Include essay topic and the date assigned to students and a comment field for teachers to add note to the task. 
+grading tasks can be selected in the essay grading tab to choose which essay the teacher is grading. Then the feedback editor (回饋編輯器) is shown (the essay title/id isn't needed. Remove it)
+
+
+the feedback editor needs the following changes:
+1. instead of a number input, make the performance level selection 4 individual container with the level number and respective descriptors for the teacher to select (highlight when selected). When a level container is selected, display the corresponding achieved(已達成) and unachieved(待加強) premade items to that level only, not all items for all levels in that aspect. 
+2. Keep the container structure for the four aspect but add a floating navigator for easier access to each section. Make sure the anchor point shows the top of the container without the name of aspect being cropped by the viewport. Remove the overall feedback section and the generate own link button.
+3. add a button to go to the next student and a separate button to the next ungraded student. When either button is clicked, automatically update the select element and scroll the viewport back to the student selection element.
+4. add a progress bar to show the grading progress.
+5. when any change detected in the feedback, automatically save the change. 
+6. add a button to open the task edit modal once the progress bar is 100%.
+7. add a symbol at the end of the select option to the student select dropdown to indicate the progress of the grading for each student. use "..." for in progress(any aspect isn't graded. Feedback isn't necessary) and use a check symbol for finished(all four aspects are graded. Feedback isn't necessary)
+
+
+
+student page:
+1. show the performance level as a range (+- 0.5 from the graded level)
+2. add a place to show the total performance level range(add all graded level then +-2) at the very bottom of the report.
+3. generate a prompt and a copy button for students to use with AI. The prompt is in the following format:
+
+這篇是關於我的作文的建議和回饋，請幫我找出作文中哪幾句話是符合「已達成」的項目，以及哪幾句話符合「待加強」，並且建議我應該如何更改句子。
+[items divided by aspect and then further into achieved and unachieved]
+
+=====
+
+
+I need the class management to handle multiple classes. So move the student ID and password table to a modal and create a button next to the created class called "edit class" and allow teachers to change information about the class and student. Include the the import and export json here.
+
+save all data in local storage in the browser to avoid reset clearing everything.
+
+The page is now too cluttered. change the create class interface into a modal.
+
+The page should by default show a list of created class. Each class is an individual container span across the viewport width and made selectable. when selected, highlight the container and expand the container to list grading tasks belonging to that class and a button to add new task with a modal. Make the grading task the same style of selectable collapsible container.
+
+
+In the grading tab, don't allow teachers to change the 
