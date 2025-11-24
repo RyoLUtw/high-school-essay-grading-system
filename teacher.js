@@ -7,11 +7,51 @@ const aspectList = [
 ];
 
 const LEVEL_CHOICES = [
-  { value: 4, label: "優", desc: "5–4 分：表現優異、細節完整" },
-  { value: 3, label: "可", desc: "3 分：方向大致到位，仍有提升空間" },
-  { value: 2, label: "差", desc: "2–1 分：多處不足，需要補強" },
-  { value: 1, label: "劣", desc: "0 分：嚴重不足，需重新改寫" },
+  {
+    label: "優",
+    points: [5, 4],
+    desc: {
+      content: "主題（句）清楚切題，並有具體、完整的相關細節支持。",
+      organization: "重點分明，有開頭、發展、結尾，前後連貫，轉承語使用得當。",
+      grammar: "全文幾無文法、格式、標點錯誤，文句結構富變化。",
+      lexical: "用字精確、得宜，且幾無拼字、大小寫錯誤。",
+    },
+  },
+  {
+    label: "可",
+    points: [3],
+    desc: {
+      content: "主題不夠清楚或突顯，部分相關敘述發展不全。",
+      organization: "重點安排不妥，前後發展比例與轉承語使用欠妥。",
+      grammar: "文法、格式、標點錯誤少，且未影響文意之表達。",
+      lexical: "字詞單調、重複，用字偶有不當，少許拼字、大小寫錯誤，但不影響文意之表達。",
+    },
+  },
+  {
+    label: "差",
+    points: [2, 1],
+    desc: {
+      content: "主題不明，大部分相關敘述發展不全或與主題無關。",
+      organization: "重點不明，前後不連貫。",
+      grammar: "文法、格式、標點錯誤多，且明顯影響文意之表達。",
+      lexical: "用字、拼字、大小寫錯誤多，明顯影響文意之表達。",
+    },
+  },
+  {
+    label: "劣",
+    points: [0],
+    desc: {
+      content: "文不對題或沒寫（凡文不對題或沒寫者，其他各項均以零分計算）。",
+      organization: "全文毫無組織或未按提示寫作。",
+      grammar: "全文文法錯誤嚴重，導致文意不明。",
+      lexical: "只寫出或抄襲與題意有關的零碎字詞。",
+    },
+  },
 ];
+
+let pendingPointAspect = null;
+let pendingPointLabel = null;
+let pendingPointOptions = [];
 
 let classes = [];
 let selectedClassId = null;
@@ -84,7 +124,7 @@ function isStudentFinished(taskId, studentId) {
   if (!cls) return false;
   const fb = cls.feedbacks?.[taskId]?.[studentId];
   if (!fb) return false;
-  return aspectList.every((a) => fb[a.key]?.level);
+  return aspectList.every((a) => fb[a.key] && fb[a.key].levelLabel && fb[a.key].level !== undefined);
 }
 
 function renderFloatingNav() {
@@ -103,6 +143,35 @@ function getRubricByAspectLevel(aspect, group, levelLabel) {
   return Object.values(RUBRIC_ITEMS).filter(
     (item) => item.aspect === aspect && item.group === group && getLevelFromId(item.id) === levelLabel
   );
+}
+
+function openPointPicker(aspectKey, levelLabel, options) {
+  pendingPointAspect = aspectKey;
+  pendingPointLabel = levelLabel;
+  pendingPointOptions = options;
+  const hint = document.getElementById("pointModalHint");
+  hint.textContent = `${levelLabel} 可給 ${options.join("、")} 分，請選擇實際給分。`;
+  const box = document.getElementById("pointChoiceContainer");
+  box.innerHTML = options
+    .map((pt) => `<button class="secondary" data-point-choice="${pt}">${pt} 分</button>`)
+    .join("");
+  openModal("pointModal");
+}
+
+function finalizePointSelection(point) {
+  if (!pendingPointAspect || !pendingPointLabel) return;
+  const cls = getCurrentClass();
+  const savedAspect =
+    cls?.feedbacks?.[selectedTaskId]?.[document.getElementById("studentSelect").value]?.[
+      pendingPointAspect
+    ];
+  setLevelUI(pendingPointAspect, pendingPointLabel, point);
+  renderRubricLists(pendingPointAspect, pendingPointLabel, savedAspect || { achieved: [], needsWork: [] });
+  saveCurrentFeedback();
+  pendingPointAspect = null;
+  pendingPointLabel = null;
+  pendingPointOptions = [];
+  closeModal("pointModal");
 }
 
 function renderRubricLists(aspectKey, levelLabel, saved = { achieved: [], needsWork: [] }) {
@@ -156,21 +225,28 @@ function renderAspectBlocks() {
   const container = document.getElementById("aspectContainer");
   container.innerHTML = "";
   aspectList.forEach((aspect) => {
+    const sectionId = `aspect-${aspect.key}`;
     const section = document.createElement("div");
     section.className = "section aspect-card";
-    section.id = `aspect-${aspect.key}`;
+    section.id = sectionId;
     section.innerHTML = `
       <h3>${aspect.label}</h3>
       <div class="level-choices">
         ${LEVEL_CHOICES.map(
-          (lvl) => `
-          <button class="level-btn" data-aspect="${aspect.key}" data-level="${lvl.value}" data-label="${lvl.label}">
-            <div class="level-num">${lvl.value}</div>
+          (lvl) => {
+            const rangeLabel =
+              lvl.points.length > 1
+                ? `${Math.max(...lvl.points)}–${Math.min(...lvl.points)} 分`
+                : `${lvl.points[0]} 分`;
+            const desc = lvl.desc[aspect.key];
+            return `
+          <button class="level-btn" data-aspect="${aspect.key}" data-label="${lvl.label}" data-points="${lvl.points.join(",")}">
             <div>
-              <div class="level-label">${lvl.label}</div>
-              <div class="small-note">${lvl.desc}</div>
+              <div class="level-label">${lvl.label}（${rangeLabel}）</div>
+              <div class="small-note">${desc}</div>
             </div>
-          </button>`
+          </button>`;
+          }
         ).join("")}
       </div>
       <div class="rubric-columns">
@@ -193,7 +269,7 @@ function renderAspectBlocks() {
   renderFloatingNav();
 }
 
-function setLevelUI(aspectKey, levelLabel) {
+function setLevelUI(aspectKey, levelLabel, points = "") {
   document.querySelectorAll(`.level-btn[data-aspect="${aspectKey}"]`).forEach((btn) => {
     if (btn.dataset.label === levelLabel) {
       btn.classList.add("active");
@@ -201,6 +277,11 @@ function setLevelUI(aspectKey, levelLabel) {
       btn.classList.remove("active");
     }
   });
+  const section = document.getElementById(`aspect-${aspectKey}`);
+  if (section) {
+    section.dataset.points = points || "";
+    section.dataset.levelLabel = levelLabel || "";
+  }
 }
 
 function resetFeedbackUI() {
@@ -220,7 +301,8 @@ function loadFeedbackIntoUI(taskId, studentId) {
   aspectList.forEach((aspect) => {
     const stored = savedByTask?.[aspect.key];
     const levelLabel = stored?.levelLabel || "";
-    setLevelUI(aspect.key, levelLabel);
+    const points = stored?.level ?? "";
+    setLevelUI(aspect.key, levelLabel, points);
     renderRubricLists(aspect.key, levelLabel, stored || { achieved: [], needsWork: [] });
   });
 }
@@ -235,7 +317,8 @@ function saveCurrentFeedback() {
   aspectList.forEach((aspect) => {
     const activeBtn = document.querySelector(`.level-btn[data-aspect="${aspect.key}"].active`);
     const levelLabel = activeBtn?.dataset.label;
-    const levelValue = activeBtn ? Number(activeBtn.dataset.level) : null;
+    const section = document.getElementById(`aspect-${aspect.key}`);
+    const levelValue = section && section.dataset.points ? Number(section.dataset.points) : null;
     const achieved = Array.from(document.querySelectorAll(`input[data-achieved="${aspect.key}"]:checked`)).map(
       (el) => el.value
     );
@@ -379,6 +462,11 @@ function openModal(id) {
 
 function closeModal(id) {
   document.getElementById(id).style.display = "none";
+  if (id === "pointModal") {
+    pendingPointAspect = null;
+    pendingPointLabel = null;
+    pendingPointOptions = [];
+  }
 }
 
 function createClass() {
@@ -609,7 +697,11 @@ async function exportLinks(taskId) {
   const rows = [];
   for (const stu of cls.students) {
     const fb = cls.feedbacks?.[taskId]?.[stu.id];
-    if (!fb || !aspectList.every((a) => fb[a.key]?.level)) continue;
+    if (
+      !fb ||
+      !aspectList.every((a) => fb[a.key] && fb[a.key].levelLabel && fb[a.key].level !== undefined)
+    )
+      continue;
     const payload = {
       classId: cls.classId,
       className: cls.className,
@@ -834,16 +926,34 @@ function bindEvents() {
     if (btn) {
       const aspect = btn.dataset.aspect;
       const levelLabel = btn.dataset.label;
+      const pointOptions = btn.dataset.points
+        .split(",")
+        .map((p) => Number(p))
+        .filter((n) => !Number.isNaN(n));
       const isActive = btn.classList.contains("active");
-      setLevelUI(aspect, isActive ? "" : levelLabel);
       const cls = getCurrentClass();
       const saved = cls?.feedbacks?.[selectedTaskId]?.[document.getElementById("studentSelect").value]?.[aspect];
       if (isActive) {
+        setLevelUI(aspect, "", "");
         renderRubricLists(aspect, "", { achieved: [], needsWork: [] });
-      } else {
-        renderRubricLists(aspect, levelLabel, saved || { achieved: [], needsWork: [] });
+        saveCurrentFeedback();
+        return;
       }
+      if (pointOptions.length > 1) {
+        openPointPicker(aspect, levelLabel, pointOptions);
+        return;
+      }
+      const pointValue = pointOptions[0] ?? null;
+      setLevelUI(aspect, levelLabel, pointValue);
+      renderRubricLists(aspect, levelLabel, saved || { achieved: [], needsWork: [] });
       saveCurrentFeedback();
+    }
+  });
+
+  document.getElementById("pointChoiceContainer").addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-point-choice]");
+    if (btn) {
+      finalizePointSelection(Number(btn.dataset.pointChoice));
     }
   });
 
