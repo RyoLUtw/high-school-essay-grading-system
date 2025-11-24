@@ -34,8 +34,6 @@ function renderAspect(aspectKey, aspectData) {
   };
   const achievedTexts = aspectData.achieved.map((id) => RUBRIC_ITEMS[id]?.text || id);
   const needsTexts = aspectData.needsWork.map((id) => RUBRIC_ITEMS[id]?.text || id);
-  if (aspectData.customAchieved) achievedTexts.push(...aspectData.customAchieved);
-  if (aspectData.customNeedsWork) needsTexts.push(...aspectData.customNeedsWork);
 
   container.innerHTML = `
     <h3>${titleMap[aspectKey]} <span class="badge">等級 ${aspectData.level}（範圍 ${levelRange(aspectData.level)}）</span></h3>

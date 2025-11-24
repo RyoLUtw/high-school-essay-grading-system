@@ -176,16 +176,12 @@ function renderAspectBlocks() {
             aspect.key
           }"></span></div>
           <div class="rubric-list" data-achieved-list="${aspect.key}"></div>
-          <label class="small-note">自訂（每行一則）</label>
-          <textarea data-custom-achieved="${aspect.key}" placeholder="自訂優點"></textarea>
         </div>
         <div>
           <div class="flex-between"><label>待加強</label><span class="small-note" data-needs-count="${
             aspect.key
           }"></span></div>
           <div class="rubric-list" data-needs-list="${aspect.key}"></div>
-          <label class="small-note">自訂（每行一則）</label>
-          <textarea data-custom-needs="${aspect.key}" placeholder="自訂待加強"></textarea>
         </div>
       </div>
     `;
@@ -204,19 +200,10 @@ function setLevelUI(aspectKey, levelLabel) {
   });
 }
 
-function gatherLines(text) {
-  return text
-    .split(/\n+/)
-    .map((t) => t.trim())
-    .filter((t) => t.length > 0);
-}
-
 function resetFeedbackUI() {
   aspectList.forEach((aspect) => {
     setLevelUI(aspect.key, "");
     renderRubricLists(aspect.key, "", { achieved: [], needsWork: [] });
-    document.querySelector(`textarea[data-custom-achieved="${aspect.key}"]`).value = "";
-    document.querySelector(`textarea[data-custom-needs="${aspect.key}"]`).value = "";
   });
 }
 
@@ -232,9 +219,6 @@ function loadFeedbackIntoUI(taskId, studentId) {
     const levelLabel = stored?.levelLabel || "";
     setLevelUI(aspect.key, levelLabel);
     renderRubricLists(aspect.key, levelLabel, stored || { achieved: [], needsWork: [] });
-    document.querySelector(`textarea[data-custom-achieved="${aspect.key}"]`).value = stored?.customAchieved?.join("\n") || "";
-    document.querySelector(`textarea[data-custom-needs="${aspect.key}"]`).value =
-      stored?.customNeedsWork?.join("\n") || "";
   });
 }
 
@@ -255,8 +239,6 @@ function saveCurrentFeedback() {
     const needsWork = Array.from(document.querySelectorAll(`input[data-needs="${aspect.key}"]:checked`)).map(
       (el) => el.value
     );
-    const customAchieved = gatherLines(document.querySelector(`textarea[data-custom-achieved="${aspect.key}"]`).value);
-    const customNeeds = gatherLines(document.querySelector(`textarea[data-custom-needs="${aspect.key}"]`).value);
     document.querySelector(`[data-achieved-count="${aspect.key}"]`).textContent = `${achieved.length} 則已選`;
     document.querySelector(`[data-needs-count="${aspect.key}"]`).textContent = `${needsWork.length} 則已選`;
     obj[aspect.key] = {
@@ -264,8 +246,6 @@ function saveCurrentFeedback() {
       levelLabel: levelLabel || "",
       achieved,
       needsWork,
-      customAchieved: customAchieved.length ? customAchieved : undefined,
-      customNeedsWork: customNeeds.length ? customNeeds : undefined,
     };
   });
   cls.feedbacks[taskId][studentId] = obj;
@@ -354,7 +334,8 @@ function renderClassList() {
               </div>`;
           })
           .join("")}
-        <button class="ghost" data-add-task="${cls.classId}">＋ 新增批改任務</button>
+        <div class="small-note light-label">＋ 新增批改任務</div>
+        <button class="ghost" data-add-task="${cls.classId}">新增任務</button>
       </div>
     `;
     list.appendChild(card);
@@ -437,6 +418,24 @@ function saveClassBasics() {
   cls.className = newName;
   selectedClassId = newId;
   saveState(true);
+  renderClassList();
+  updateGradingHeader();
+}
+
+function deleteClass() {
+  const cls = getCurrentClass();
+  if (!cls) return;
+  if (!confirm(`確定刪除 ${cls.classId}？所有任務與進度都會移除。`)) return;
+  classes = classes.filter((c) => c.classId !== cls.classId);
+  if (!classes.length) {
+    selectedClassId = null;
+    selectedTaskId = null;
+  } else {
+    selectedClassId = classes[0].classId;
+    selectedTaskId = classes[0].tasks[0]?.id || null;
+  }
+  saveState(true);
+  closeModal("editClassModal");
   renderClassList();
   updateGradingHeader();
 }
@@ -690,6 +689,9 @@ function bindTabs() {
       document.querySelectorAll(".tab-panel").forEach((p) => p.classList.remove("active"));
       btn.classList.add("active");
       document.getElementById(btn.dataset.tab).classList.add("active");
+      if (btn.dataset.tab === "classTab") {
+        refreshAll();
+      }
     });
   });
 }
@@ -703,6 +705,8 @@ function bindEvents() {
     btn.addEventListener("click", () => closeModal(btn.dataset.close));
   });
   document.getElementById("createClassBtn").addEventListener("click", createClass);
+
+  document.getElementById("deleteClassBtn").addEventListener("click", deleteClass);
 
   document.getElementById("classList").addEventListener("click", (e) => {
     const classCard = e.target.closest(".class-card");
@@ -770,6 +774,22 @@ function bindEvents() {
 
   document.getElementById("closeTaskModal").addEventListener("click", () => closeModal("taskModal"));
 
+  document.getElementById("openNavModal").addEventListener("click", () => {
+    renderFloatingNav();
+    openModal("navModal");
+  });
+
+  document.getElementById("openSecretModal").addEventListener("click", () => {
+    renderSecretViewer();
+    closeModal("editClassModal");
+    openModal("secretModal");
+  });
+  document.getElementById("closeSecretModal").addEventListener("click", () => {
+    closeModal("secretModal");
+    populateEditClassModal();
+    openModal("editClassModal");
+  });
+
   document.getElementById("studentSelect").addEventListener("change", () => {
     const taskId = selectedTaskId;
     const stuId = document.getElementById("studentSelect").value;
@@ -788,12 +808,6 @@ function bindEvents() {
       const cls = getCurrentClass();
       const saved = cls?.feedbacks?.[selectedTaskId]?.[document.getElementById("studentSelect").value]?.[aspect];
       renderRubricLists(aspect, levelLabel, saved || { achieved: [], needsWork: [] });
-      saveCurrentFeedback();
-    }
-  });
-
-  document.getElementById("aspectContainer").addEventListener("input", (e) => {
-    if (e.target.matches("textarea")) {
       saveCurrentFeedback();
     }
   });

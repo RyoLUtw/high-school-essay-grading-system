@@ -317,6 +317,40 @@ input.inline-input {
   scroll-margin-top: 90px;
 }
 
+.sticky-actions {
+  position: sticky;
+  bottom: 0;
+  background: #fff;
+  padding: 0.75rem 0;
+  border-top: 1px solid var(--border);
+  margin-top: 1rem;
+}
+
+.icon-btn {
+  border: none;
+  background: transparent;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.modal.floating {
+  align-items: flex-end;
+  justify-content: flex-end;
+  padding: 1rem;
+}
+
+.modal.floating .modal-content {
+  width: 320px;
+  max-width: 90vw;
+  position: sticky;
+  right: 1rem;
+  top: 1rem;
+}
+
+.light-label {
+  color: var(--muted);
+}
+
 .progress-wrap {
   display: flex;
   flex-direction: column;
