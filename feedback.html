@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>學生端｜解鎖作文回饋</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="page">
+    <header class="flex-between">
+      <div>
+        <h1>學生端</h1>
+        <p class="small-note">輸入老師提供的密碼以解鎖你的個人回饋。</p>
+      </div>
+    </header>
+
+    <section class="section" id="lockedView">
+      <div class="locked-box">
+        <p id="lockedMeta"></p>
+        <label for="codeInput">輸入你的密碼</label>
+        <input type="text" id="codeInput" placeholder="四位數字或簡短英文">
+        <div style="margin-top:0.5rem;">
+          <button id="unlockBtn">解鎖</button>
+        </div>
+        <div id="errorMsg" class="small-note" style="color:#b91c1c; margin-top:0.35rem;"></div>
+      </div>
+    </section>
+
+    <section class="section" id="feedbackView" style="display:none;"></section>
+  </div>
+
+  <script src="rubric.js"></script>
+  <script src="feedback.js"></script>
+</body>
+</html>

@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>教師端｜作文評分與回饋</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="page">
+    <header class="flex-between">
+      <div>
+        <h1>教師端</h1>
+        <p class="small-note">建立班級、管理批改任務並在同頁完成回饋。</p>
+      </div>
+    </header>
+
+    <div class="tab-bar">
+      <button class="tab-btn active" data-tab="classTab">班級管理</button>
+      <button class="tab-btn" data-tab="gradingTab">作文批改</button>
+    </div>
+
+    <section class="section tab-panel active" id="classTab">
+      <h2>班級管理</h2>
+      <div class="grid-2">
+        <div>
+          <label for="classId">班級代碼</label>
+          <input type="text" id="classId" placeholder="例如：7A">
+        </div>
+        <div>
+          <label for="className">班級名稱（可選）</label>
+          <input type="text" id="className" placeholder="例：七年甲班">
+        </div>
+        <div>
+          <label for="classSize">班級人數</label>
+          <input type="number" id="classSize" min="1" max="100" value="30">
+        </div>
+        <div style="align-self: end;">
+          <button id="createClassBtn">建立班級並自動產生密碼</button>
+        </div>
+      </div>
+      <div class="small-note">學生密碼僅儲存在瀏覽器，可隨時匯出 JSON 備份。</div>
+
+      <div class="table-scroll" style="margin-top: 1rem;">
+        <table id="studentTable">
+          <thead>
+            <tr>
+              <th>座號</th>
+              <th>姓名</th>
+              <th>密碼</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div class="flex-between" style="margin-top: 0.75rem;">
+        <div>
+          <button class="secondary" id="importBtn">匯入 JSON</button>
+          <input type="file" id="importFile" accept="application/json" style="display:none;">
+          <button id="exportBtn">匯出 JSON</button>
+        </div>
+        <div class="small-note">若變更密碼，請重新產生新的回饋連結。</div>
+      </div>
+
+      <div class="divider"></div>
+      <h3>批改任務</h3>
+      <div class="grid-3">
+        <div>
+          <label for="taskTopic">作文主題</label>
+          <input type="text" id="taskTopic" placeholder="例：校服議題短文">
+        </div>
+        <div>
+          <label for="taskDate">布置日期</label>
+          <input type="date" id="taskDate">
+        </div>
+        <div>
+          <label for="taskNote">教師備註（可選）</label>
+          <input type="text" id="taskNote" placeholder="例如：需強調論點支持">
+        </div>
+      </div>
+      <div class="flex-between" style="margin-top:0.75rem;">
+        <button id="createTaskBtn">新增批改任務</button>
+        <button class="secondary" id="manageTaskBtn">管理任務與匯出連結</button>
+      </div>
+    </section>
+
+    <section class="section tab-panel" id="gradingTab">
+      <h2>作文批改</h2>
+      <div class="grid-3">
+        <div>
+          <label for="taskSelect">選擇批改任務</label>
+          <select id="taskSelect"></select>
+        </div>
+        <div>
+          <label for="studentSelect">選擇學生</label>
+          <select id="studentSelect"></select>
+        </div>
+        <div class="progress-wrap">
+          <label>批改進度</label>
+          <div class="progress-bar">
+            <div class="progress-bar-fill" id="progressFill"></div>
+          </div>
+          <div class="flex-between small-note">
+            <span id="progressText">0%</span>
+            <button class="secondary" id="openTaskModalBtn" style="display:none;">查看任務設定</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex-between" style="gap:0.75rem; margin:0.5rem 0 0.5rem;">
+        <div class="floating-nav" id="floatingNav"></div>
+        <div class="flex-between" style="gap:0.5rem;">
+          <button class="secondary" id="nextStudentBtn">下一位</button>
+          <button class="secondary" id="nextUngradedBtn">下一位未完成</button>
+        </div>
+      </div>
+
+      <div id="aspectContainer"></div>
+    </section>
+  </div>
+
+  <div class="modal" id="taskModal" style="display:none;">
+    <div class="modal-content">
+      <div class="flex-between">
+        <h3>批改任務管理</h3>
+        <button class="secondary" id="closeTaskModal">關閉</button>
+      </div>
+      <div id="taskList"></div>
+    </div>
+  </div>
+
+  <div id="status" class="status" style="display:none;"></div>
+
+  <script src="rubric.js"></script>
+  <script src="teacher.js"></script>
+</body>
+</html>

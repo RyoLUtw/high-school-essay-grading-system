@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>作文評分與回饋</title>
+  <meta http-equiv="refresh" content="0; url=./" />
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="page" style="text-align:center; padding:2rem 1rem;">
+    <p>正在載入...</p>
+  </div>
+  <script>
+    (function() {
+      const params = new URLSearchParams(location.search);
+      const hasPayload = params.has('p') || params.has('h');
+      const target = hasPayload ? 'feedback.html' : 'teacher.html';
+      const search = location.search || '';
+      location.replace(`${target}${search}`);
+    })();
+  </script>
+</body>
+</html>
