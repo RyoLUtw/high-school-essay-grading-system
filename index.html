@@ -3,28 +3,22 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>作文評分與回饋系統</title>
+  <title>作文評分與回饋</title>
+  <meta http-equiv="refresh" content="0; url=./" />
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <header class="site-header">
-    <h1>高中英文短文評分與回饋</h1>
-    <p>無需伺服器的教師端與學生端工具。</p>
-  </header>
-
-  <main class="cards">
-    <a class="card" href="teacher.html">
-      <h2>教師端</h2>
-      <p>建立班級、管理學生密碼、填寫評分規準並產生分享連結。</p>
-    </a>
-    <a class="card" href="feedback.html">
-      <h2>學生端</h2>
-      <p>輸入密碼解鎖個人回饋，查看優勢與待加強重點。</p>
-    </a>
-  </main>
-
-  <footer class="site-footer">
-    <p>所有資料僅存於瀏覽器，適合 GitHub Pages 等純前端部署。</p>
-  </footer>
+  <div class="page" style="text-align:center; padding:2rem 1rem;">
+    <p>正在載入...</p>
+  </div>
+  <script>
+    (function() {
+      const params = new URLSearchParams(location.search);
+      const hasPayload = params.has('p') || params.has('h');
+      const target = hasPayload ? 'feedback.html' : 'teacher.html';
+      const search = location.search || '';
+      location.replace(`${target}${search}`);
+    })();
+  </script>
 </body>
 </html>
