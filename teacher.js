@@ -259,6 +259,7 @@ function saveCurrentFeedback() {
 
 function renderStudentSelect() {
   const select = document.getElementById("studentSelect");
+  const previous = select.value;
   select.innerHTML = "";
   const cls = getCurrentClass();
   if (!cls) return;
@@ -271,7 +272,12 @@ function renderStudentSelect() {
     option.textContent = `${stu.id}${stu.name ? " - " + stu.name : ""}${marker}`;
     select.appendChild(option);
   });
-  if (!select.value && cls.students.length) select.value = cls.students[0].id;
+  const hasPrev = Array.from(select.options).some((o) => o.value === previous);
+  if (hasPrev) {
+    select.value = previous;
+  } else if (!select.value && cls.students.length) {
+    select.value = cls.students[0].id;
+  }
 }
 
 function updateProgress() {

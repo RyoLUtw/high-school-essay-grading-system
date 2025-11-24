@@ -331,6 +331,7 @@ input.inline-input {
   background: transparent;
   font-size: 1rem;
   cursor: pointer;
+  color: var(--text);
 }
 
 .close-top {
@@ -376,6 +377,21 @@ input.inline-input {
   width: 0%;
   background: var(--primary);
   transition: width 0.2s ease;
+}
+
+.action-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.progress-compact label {
+  margin-bottom: 0.25rem;
+}
+
+.progress-compact .progress-bar {
+  margin: 0.15rem 0;
 }
 
 .modal {
@@ -515,6 +531,7 @@ input.inline-input {
   padding: 0.65rem;
   border-radius: 10px;
   cursor: pointer;
+  color: var(--text);
 }
 
 .ghost .light-label {

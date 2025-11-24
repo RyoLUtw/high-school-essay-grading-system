@@ -36,30 +36,28 @@
         <div>批改任務：<span id="currentTaskLabel">尚未選擇</span></div>
       </div>
 
-      <div class="grid-3" style="align-items:end;">
+      <div class="grid-2" style="align-items:end;">
         <div>
           <label for="studentSelect">選擇學生</label>
           <select id="studentSelect"></select>
-        </div>
-        <div class="progress-wrap">
-          <label>批改進度</label>
-          <div class="progress-bar">
-            <div class="progress-bar-fill" id="progressFill"></div>
-          </div>
-          <div class="flex-between small-note">
-            <span id="progressText">0%</span>
-            <button class="secondary" id="openTaskModalBtn" style="display:none;">任務設定</button>
-          </div>
-        </div>
-        <div class="flex-end" style="gap:0.5rem;">
-          <button class="ghost" id="openNavModal">開啟面向導覽</button>
         </div>
       </div>
 
       <div id="aspectContainer"></div>
 
       <div class="sticky-actions">
-        <div class="flex-between" style="gap:0.5rem;">
+        <div class="action-grid">
+          <button class="ghost" id="openNavModal">開啟面向導覽</button>
+          <div class="progress-wrap progress-compact">
+            <label>批改進度</label>
+            <div class="progress-bar">
+              <div class="progress-bar-fill" id="progressFill"></div>
+            </div>
+            <div class="flex-between small-note">
+              <span id="progressText">0%</span>
+              <button class="secondary" id="openTaskModalBtn" style="display:none;">任務設定</button>
+            </div>
+          </div>
           <button class="secondary" id="nextStudentBtn">下一位</button>
           <button class="secondary" id="nextUngradedBtn">下一位未完成</button>
         </div>
